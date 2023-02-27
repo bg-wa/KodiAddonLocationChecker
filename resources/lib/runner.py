@@ -39,8 +39,6 @@ class LocationChecker:
         self.first_run = False
 
 
-
-
     def check_ip(self):
         url = "http://ip.42.pl/raw"
         req = Request(url)
