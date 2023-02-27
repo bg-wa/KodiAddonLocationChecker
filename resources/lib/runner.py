@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import xbmc
 import json
 
@@ -12,45 +11,64 @@ except ImportError:
     from urllib.parse import urlencode
 
 
-def alert(message, title="Location Checker", time=5000, image=""):
-    xbmc.executebuiltin('Notification({0}, {1}, {2}, {3})'.format(title, message, time, image))
+class LocationChecker:
+    def __init__(self):
+        self.first_run = True
+
+    def alert(self, message, title="Location Checker", time=5000, image=""):
+        xbmc.executebuiltin('Notification({0}, {1}, {2}, {3})'.format(title, message, time, image))
+
+    def process_ip(self, ip):
+        # get country code from ip address
+        url = "http://ip-api.com/json/{0}".format(ip)
+        req = Request(url)
+        try:
+            json_response = urlopen(req)
+        except URLError as e:
+            return e
+        response = json.loads(json_response.read().decode('utf-8'))
+        country_code = response['countryCode']
+        if country_code == 'US':
+            self.alert("WARNING!! You are in the US. Please use a VPN to protect your privacy.")
+            xbmc.Player().stop()
+            xbmc.executebuiltin('ActivateWindow(Home)')
+        else:
+            if self.first_run:
+                self.alert("VPN Connected! You are safe in ({0}). Enjoy!".format(country_code))
+
+        self.first_run = False
 
 
-def process_ip(ip):
-    # get country code from ip address
-    url = "http://ip-api.com/json/{0}".format(ip)
-    req = Request(url)
-    try:
-        json_response = urlopen(req)
-    except URLError as e:
-        return e
-    response = json.loads(json_response.read().decode('utf-8'))
-    country_code = response['countryCode']
-    if country_code == 'US':
-        alert("WARNING!! You are in the US. Please use a VPN to protect your privacy.")
-        xbmc.Player().stop()
-        xbmc.executebuiltin('ActivateWindow(Home)')
 
 
-def check_ip():
-    url = "http://ip.42.pl/raw"
-    req = Request(url)
-    try:
-        response = urlopen(req)
-    except URLError as e:
-        return e
-    ip_address = response.read().decode('utf-8')
-    process_ip(ip_address)
+    def check_ip(self):
+        url = "http://ip.42.pl/raw"
+        req = Request(url)
+        try:
+            response = urlopen(req)
+        except URLError as e:
+            return e
+        ip_address = response.read().decode('utf-8')
+        self.process_ip(ip_address)
+
+    def run(self):
+        monitor = xbmc.Monitor()
+        if self.first_run:
+            self.alert("Checking VPN Status. Please wait...")
+
+        self.check_ip()
+        while not monitor.abortRequested():
+            # Sleep/wait for abort for 5 minutes
+            minutes = 1
+            seconds = minutes * 60
+            if monitor.waitForAbort(seconds):
+                # Abort was requested while waiting. We should exit
+                break
+
+            self.check_ip()
 
 
 if __name__ == "__main__":
-    monitor = xbmc.Monitor()
-    check_ip()
-    while not monitor.abortRequested():
-        # Sleep/wait for abort for 5 minutes
-        minutes = 5
-        seconds = minutes * 60
-        if monitor.waitForAbort(seconds):
-            # Abort was requested while waiting. We should exit
-            break
-        check_ip()
+    location_checker = LocationChecker()
+    location_checker.run()
+
