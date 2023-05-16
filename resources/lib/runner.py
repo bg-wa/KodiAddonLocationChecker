@@ -15,9 +15,12 @@ except ImportError:
 class LocationChecker:
     def __init__(self):
         self.first_run = True
+        self.dialog = None
 
-    def alert(self, message, title="Location Checker", time=5000, image=""):
-        xbmc.executebuiltin('Notification({0}, {1}, {2}, {3})'.format(title, message, time, image))
+    def close_dialog(self):
+            if self.dialog is not None:
+                self.dialog.close()
+                self.dialog = None
 
     def process_ip(self, ip):
         # get country code from ip address
@@ -30,13 +33,18 @@ class LocationChecker:
         response = json.loads(json_response.read().decode('utf-8'))
         country_code = response['countryCode']
         if country_code == 'US':
-            dialog.update(100, "WARNING!! You are in the US. Please use a VPN to protect your privacy.")
+            if self.dialog is not None:
+                self.dialog.update(100, "WARNING!! You are in the US. Please use a VPN to protect your privacy.")
+            else:
+                self.dialog = xbmcgui.DialogProgress()
+                self.dialog.create('Location Checker', 'WARNING!! You are in the US. Please use a VPN to protect your privacy.')
+
             xbmc.Player().stop()
             xbmc.executebuiltin('Quit')
         else:
             if self.first_run:
-                dialog.update(100, "VPN Connected! You are in ({0}). Enjoy!".format(country_code))
-                dialog.close()
+                self.dialog.update(100, "VPN Connected! You are in ({0}). Enjoy!".format(country_code))
+                self.close_dialog()
 
         self.first_run = False
 
@@ -54,7 +62,8 @@ class LocationChecker:
     def run(self):
         monitor = xbmc.Monitor()
         if self.first_run:
-            dialog.create('Location Checker', 'Checking VPN Status. Please wait...')
+            self.dialog = xbmcgui.DialogProgress()
+            self.dialog.create('Location Checker', 'Checking VPN Status. Please wait...')
 
         self.check_ip()
         while not monitor.abortRequested():
@@ -70,6 +79,5 @@ class LocationChecker:
 
 if __name__ == "__main__":
     location_checker = LocationChecker()
-    dialog = xbmcgui.DialogProgress()
     location_checker.run()
 
