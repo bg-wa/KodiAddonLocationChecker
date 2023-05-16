@@ -1,4 +1,5 @@
 import xbmc
+import xbmcgui
 import json
 
 try:  # PY2 / PY3
@@ -29,12 +30,13 @@ class LocationChecker:
         response = json.loads(json_response.read().decode('utf-8'))
         country_code = response['countryCode']
         if country_code == 'US':
-            self.alert("WARNING!! You are in the US. Please use a VPN to protect your privacy.")
+            dialog.update(100, "WARNING!! You are in the US. Please use a VPN to protect your privacy.")
             xbmc.Player().stop()
-            xbmc.executebuiltin('ActivateWindow(Home)')
+            xbmc.executebuiltin('Quit')
         else:
             if self.first_run:
-                self.alert("VPN Connected! You are safe in ({0}). Enjoy!".format(country_code))
+                dialog.update(100, "VPN Connected! You are in ({0}). Enjoy!".format(country_code))
+                dialog.close()
 
         self.first_run = False
 
@@ -52,11 +54,11 @@ class LocationChecker:
     def run(self):
         monitor = xbmc.Monitor()
         if self.first_run:
-            self.alert("Checking VPN Status. Please wait...")
+            dialog.create('Location Checker', 'Checking VPN Status. Please wait...')
 
         self.check_ip()
         while not monitor.abortRequested():
-            # Sleep/wait for abort for 5 minutes
+            # Sleep/wait for abort for 1 minutes
             minutes = 1
             seconds = minutes * 60
             if monitor.waitForAbort(seconds):
@@ -68,5 +70,6 @@ class LocationChecker:
 
 if __name__ == "__main__":
     location_checker = LocationChecker()
+    dialog = xbmcgui.DialogProgress()
     location_checker.run()
 
