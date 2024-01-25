@@ -1,0 +1,5 @@
+<settings>
+    <category label="General">
+        <setting id="vpn_country" type="text" label="Local Country" default="US" />
+    </category>
+</settings>
