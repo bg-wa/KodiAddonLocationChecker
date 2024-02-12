@@ -1,5 +1,8 @@
 <settings>
     <category label="General">
         <setting id="vpn_country" type="text" label="Local Country" default="US" />
+        <setting id="public_ip_url" type="text" label="Public IP URL" default="https://api.ipify.org?format=json" />
+        <setting id="geocode_url" type="text" label="Geocode URL" default="http://ip-api.com/json/" />
+        <setting id="frequency" type="number" label="Frequency (seconds)" default="60" />
     </category>
 </settings>
